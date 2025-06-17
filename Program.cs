@@ -1,6 +1,7 @@
 using enquetix.Modules.Application;
 using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
+using enquetix.Modules.Auth.Services;
 using enquetix.Modules.User.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContextPool<Context>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
 
 // Miscellaneous
 builder.Services.AddControllers()
@@ -20,6 +25,13 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = ".enquetix.session";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.IdleTimeout = TimeSpan.FromDays(1);
+});
 builder.Services.AddOpenApi();
 
 // Services
@@ -31,6 +43,9 @@ builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 // -- User
 builder.Services.AddScoped<IUserService, UserService>();
 
+// -- Auth
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -38,6 +53,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseSession();
 app.UseAuthorization();
 app.MapControllers();
 

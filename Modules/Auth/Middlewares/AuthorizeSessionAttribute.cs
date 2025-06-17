@@ -1,0 +1,34 @@
+﻿using enquetix.Modules.Auth.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+
+namespace enquetix.Modules.Auth.Middlewares
+{
+    [AttributeUsage(AttributeTargets.Method)]
+    public class AuthorizeSessionAttribute : Attribute, IAsyncAuthorizationFilter, IAuthorizationFilter
+    {
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            var session = context.HttpContext.Session;
+            var userId = session.GetString(SessionKeys.UserId);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                context.Result = new UnauthorizedResult();
+            }
+        }
+
+        public Task OnAuthorizationAsync(AuthorizationFilterContext context)
+        {
+            var session = context.HttpContext.Session;
+            var userId = session.GetString(SessionKeys.UserId);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                context.Result = new UnauthorizedResult();
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+}
