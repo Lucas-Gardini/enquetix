@@ -11,7 +11,7 @@ namespace enquetix.Modules.Auth.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] string email, [FromForm] string password)
         {
-            var user = await authService.ValidateUser(email, password);
+            var user = await authService.ValidateUserAsync(email, password);
 
             HttpContext.Session.SetString(SessionKeys.UserId, user.Id.ToString());
             HttpContext.Session.SetString(SessionKeys.Username, user.Username);

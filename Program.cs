@@ -2,7 +2,9 @@ using enquetix.Modules.Application;
 using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
+using enquetix.Modules.Poll.Services;
 using enquetix.Modules.User.Services;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -35,6 +37,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 builder.Services.AddOpenApi();
+builder.Services.AddHttpContextAccessor();
 
 // Services
 // -- Cache
@@ -46,6 +49,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 // -- Auth
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// -- Poll
+builder.Services.AddScoped<IPollService, PollService>();
+builder.Services.AddScoped<IPollOptionService, PollOptionService>();
+builder.Services.AddScoped<IPollVoteService, PollVoteService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -53,21 +61,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-//app.UseExceptionHandler(errorApp =>
-//{
-//    errorApp.Run(async context =>
-//    {
-//        var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
-//        if (exceptionHandler?.Error is HttpResponseException ex)
-//        {
-//            context.Response.StatusCode = ex.Status;
-//            if (ex.Value != null)
-//            {
-//                await context.Response.WriteAsJsonAsync(ex.Value);
-//            }
-//        }
-//    });
-//});
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
+        if (exceptionHandler?.Error is HttpResponseException ex)
+        {
+            context.Response.StatusCode = ex.Status;
+            if (ex.Value != null)
+            {
+                await context.Response.WriteAsJsonAsync(ex.Value);
+            }
+        }
+    });
+});
 
 app.UseSession();
 app.UseAuthorization();

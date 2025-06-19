@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace enquetix.Modules.Auth.Middlewares
 {
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
     public class AuthorizeSessionAttribute : Attribute, IAsyncAuthorizationFilter, IAuthorizationFilter
     {
         public void OnAuthorization(AuthorizationFilterContext context)

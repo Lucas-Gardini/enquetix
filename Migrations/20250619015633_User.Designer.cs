@@ -12,7 +12,7 @@ using enquetix.Modules.Application.EntityFramework;
 namespace enquetix.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20250617022117_User")]
+    [Migration("20250619015633_User")]
     partial class User
     {
         /// <inheritdoc />
