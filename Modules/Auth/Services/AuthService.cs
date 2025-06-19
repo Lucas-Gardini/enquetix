@@ -9,8 +9,7 @@ namespace enquetix.Modules.Auth.Services
     {
         public async Task<UserModel> ValidateUser(string email, string password)
         {
-            var user = await context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.Password))
                 throw new HttpResponseException

@@ -18,17 +18,22 @@ namespace enquetix.Modules.Auth.Middlewares
             }
         }
 
-        public Task OnAuthorizationAsync(AuthorizationFilterContext context)
+        public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
             var session = context.HttpContext.Session;
+
             var userId = session.GetString(SessionKeys.UserId);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                await session.LoadAsync();
+                userId = session.GetString(SessionKeys.UserId);
+            }
 
             if (string.IsNullOrWhiteSpace(userId))
             {
                 context.Result = new UnauthorizedResult();
             }
-
-            return Task.CompletedTask;
         }
     }
 }
