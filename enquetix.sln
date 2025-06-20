@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "enquetix", "enquetix\enquetix.csproj", "{14941C73-7959-433C-AB8B-3C79BAEDA7D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "enquetix.Test", "enquetix.Test\enquetix.Test.csproj", "{4D111555-D224-4CC6-8718-4AEE34B7B240}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{14941C73-7959-433C-AB8B-3C79BAEDA7D3}.Release|x64.Build.0 = Release|Any CPU
 		{14941C73-7959-433C-AB8B-3C79BAEDA7D3}.Release|x86.ActiveCfg = Release|Any CPU
 		{14941C73-7959-433C-AB8B-3C79BAEDA7D3}.Release|x86.Build.0 = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|x64.Build.0 = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Debug|x86.Build.0 = Debug|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|x64.ActiveCfg = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|x64.Build.0 = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|x86.ActiveCfg = Release|Any CPU
+		{4D111555-D224-4CC6-8718-4AEE34B7B240}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
