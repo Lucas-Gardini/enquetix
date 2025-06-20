@@ -9,8 +9,8 @@ namespace enquetix.Modules.Application.EntityFramework
     {
         public DbSet<UserModel> Users => Set<UserModel>();
         public DbSet<PollModel> Polls => Set<PollModel>();
-        public DbSet<PollVotesModel> PollVotes => Set<PollVotesModel>();
-        public DbSet<PollOptionsModel> PollOptions => Set<PollOptionsModel>();
+        public DbSet<PollVoteModel> PollVotes => Set<PollVoteModel>();
+        public DbSet<PollOptionModel> PollOptions => Set<PollOptionModel>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,21 +34,21 @@ namespace enquetix.Modules.Application.EntityFramework
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Poll ➜ PollVotes
-            modelBuilder.Entity<PollVotesModel>()
+            modelBuilder.Entity<PollVoteModel>()
                 .HasOne(v => v.Poll)
                 .WithMany()
                 .HasForeignKey(v => v.PollId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Option ➜ PollVotes
-            modelBuilder.Entity<PollVotesModel>()
+            modelBuilder.Entity<PollVoteModel>()
                 .HasOne(v => v.Option)
                 .WithMany()
                 .HasForeignKey(v => v.OptionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User ➜ PollVotes
-            modelBuilder.Entity<PollVotesModel>()
+            modelBuilder.Entity<PollVoteModel>()
                 .HasOne(v => v.User)
                 .WithMany()
                 .HasForeignKey(v => v.UserId)

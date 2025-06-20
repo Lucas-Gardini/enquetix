@@ -1,5 +1,6 @@
 ﻿using enquetix.Modules.Application;
 using enquetix.Modules.Application.EntityFramework;
+using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.DTOs;
 using enquetix.Modules.Poll.Repository;
@@ -7,41 +8,44 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enquetix.Modules.Poll.Services
 {
-    public class PollOptionService(Context context, IAuthService authService) : IPollOptionService
+    public class PollOptionService(Context context, IAuthService authService, ICacheService cacheService) : IPollOptionService
     {
-        public async Task<PollOptionsModel> GetPollOptionAsync(Guid id)
+        public async Task<PollOptionModel> GetPollOptionAsync(Guid id)
         {
-            var option = await context.PollOptions.FirstOrDefaultAsync(o => o.Id == id);
-            return option ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Option not found" } };
+            var cacheKey = $"pollOption:{id}";
+            var option = await cacheService.CacheAsync(cacheKey, async () =>
+            {
+                return await context.PollOptions.FirstOrDefaultAsync(o => o.Id == id)
+                    ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Option not found" } };
+            }, TimeSpan.FromMinutes(1));
+            return option!;
         }
 
-        public async Task<List<PollOptionsModel>> GetPollOptionsAsync(Guid pollId)
+        public async Task<List<PollOptionModel>> GetPollOptionsAsync(Guid pollId)
         {
-            if (!await context.Polls.AnyAsync(p => p.Id == pollId))
-            {
-                throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found" } };
-            }
+            var pollOptionsKey = $"pollOptions:poll:{pollId}";
 
-            var polls = await context.PollOptions.AsNoTracking().Where(p => p.PollId == pollId).ToListAsync();
-            return polls;
+            if (!await context.Polls.AsNoTracking().AnyAsync(p => p.Id == pollId))
+                throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found" } };
+
+            var options = await cacheService.CacheAsync(pollOptionsKey, async () =>
+            {
+                return await context.PollOptions.AsNoTracking().Where(p => p.PollId == pollId).ToListAsync();
+            }, TimeSpan.FromMinutes(1));
+            return options!;
         }
 
-        public async Task<PollOptionsModel> CreatePollOptionAsync(Guid pollId, CreatePollOptionDto poll)
+        public async Task<PollOptionModel> CreatePollOptionAsync(Guid pollId, CreatePollOptionDto poll)
         {
             if (!await context.Polls.AnyAsync(p => p.Id == pollId))
-            {
                 throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found" } };
-            }
 
             var exists = await context.PollOptions
                 .AnyAsync(o => o.PollId == pollId && o.OptionText.ToLower() == poll.OptionText.ToLower());
-
             if (exists)
-            {
                 throw new HttpResponseException { Status = 409, Value = new { Message = "Option with same text already exists in this poll." } };
-            }
 
-            var option = new PollOptionsModel
+            var option = new PollOptionModel
             {
                 PollId = pollId,
                 OptionText = poll.OptionText
@@ -49,16 +53,14 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.Add(option);
             await context.SaveChangesAsync();
-
+            await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
             return option;
         }
 
-        public async Task<List<PollOptionsModel>> CreatePollOptionsAsync(Guid pollId, List<CreatePollOptionDto> polls)
+        public async Task<List<PollOptionModel>> CreatePollOptionsAsync(Guid pollId, List<CreatePollOptionDto> polls)
         {
             if (!await context.Polls.AnyAsync(p => p.Id == pollId))
-            {
                 throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found" } };
-            }
 
             var existingTexts = await context.PollOptions
                 .Where(o => o.PollId == pollId)
@@ -71,15 +73,13 @@ namespace enquetix.Modules.Poll.Services
                 .ToList();
 
             if (duplicates.Count != 0)
-            {
                 throw new HttpResponseException
                 {
                     Status = 409,
                     Value = new { Message = $"Duplicate option(s) detected: {string.Join(", ", duplicates)}" }
                 };
-            }
 
-            var options = polls.Select(dto => new PollOptionsModel
+            var options = polls.Select(dto => new PollOptionModel
             {
                 PollId = pollId,
                 OptionText = dto.OptionText
@@ -87,19 +87,19 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.AddRange(options);
             await context.SaveChangesAsync();
-
+            await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
             return options;
         }
 
-        public async Task<PollOptionsModel> UpdatePollOptionAsync(Guid id, UpdatePollOptionDto poll)
+        public async Task<PollOptionModel> UpdatePollOptionAsync(Guid id, UpdatePollOptionDto poll)
         {
             var existingOption = await GetPollOptionAsync(id);
-
             existingOption.OptionText = poll.OptionText ?? existingOption.OptionText;
 
             context.PollOptions.Update(existingOption);
             await context.SaveChangesAsync();
-
+            await cacheService.RemoveAsync($"pollOption:{id}");
+            await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
             return existingOption;
         }
 
@@ -108,16 +108,16 @@ namespace enquetix.Modules.Poll.Services
             var existingOption = await GetPollOptionAsync(id);
 
             if (!await context.Polls.AsNoTracking().AnyAsync(p => p.Id == existingOption.PollId && p.CreatedBy == authService.GetLoggedUserId()))
-            {
                 throw new HttpResponseException
                 {
                     Status = 401,
                     Value = new { Message = $"You do not have permission to delete this option." }
                 };
-            }
 
             context.PollOptions.Remove(existingOption);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"pollOption:{id}");
+            await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
         }
 
         public async Task DeletePollOptionsAsync(List<Guid> pollOptionsIds)
@@ -129,34 +129,34 @@ namespace enquetix.Modules.Poll.Services
             foreach (var pollOption in options)
             {
                 if (!await context.Polls.AsNoTracking().AnyAsync(p => p.Id == pollOption.PollId && p.CreatedBy == authService.GetLoggedUserId()))
-                {
                     throw new HttpResponseException
                     {
                         Status = 401,
                         Value = new { Message = $"You do not have permission to delete option with ID {pollOption.Id}." }
                     };
-                }
             }
 
             context.PollOptions.RemoveRange(options);
             await context.SaveChangesAsync();
+
+            foreach (var option in options)
+            {
+                await cacheService.RemoveAsync($"pollOption:{option.Id}");
+                await cacheService.RemoveAsync($"pollOptions:poll:{option.PollId}");
+            }
         }
 
         public async Task DeletePollOptionsAsync(Guid pollId)
         {
             if (!await context.Polls.AnyAsync(p => p.Id == pollId))
-            {
                 throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found" } };
-            }
 
             if (!await context.Polls.AsNoTracking().AnyAsync(p => p.Id == pollId && p.CreatedBy == authService.GetLoggedUserId()))
-            {
                 throw new HttpResponseException
                 {
                     Status = 401,
                     Value = new { Message = $"You do not have permission to delete options for this poll." }
                 };
-            }
 
             var options = await context.PollOptions
                 .Where(o => o.PollId == pollId)
@@ -164,19 +164,23 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.RemoveRange(options);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
+            foreach (var option in options)
+            {
+                await cacheService.RemoveAsync($"pollOption:{option.Id}");
+            }
         }
     }
 
-
     public interface IPollOptionService
     {
-        Task<PollOptionsModel> GetPollOptionAsync(Guid id);
-        Task<List<PollOptionsModel>> GetPollOptionsAsync(Guid pollId);
+        Task<PollOptionModel> GetPollOptionAsync(Guid id);
+        Task<List<PollOptionModel>> GetPollOptionsAsync(Guid pollId);
 
-        Task<PollOptionsModel> CreatePollOptionAsync(Guid pollId, CreatePollOptionDto poll);
-        Task<List<PollOptionsModel>> CreatePollOptionsAsync(Guid pollId, List<CreatePollOptionDto> polls);
+        Task<PollOptionModel> CreatePollOptionAsync(Guid pollId, CreatePollOptionDto poll);
+        Task<List<PollOptionModel>> CreatePollOptionsAsync(Guid pollId, List<CreatePollOptionDto> polls);
 
-        Task<PollOptionsModel> UpdatePollOptionAsync(Guid id, UpdatePollOptionDto poll);
+        Task<PollOptionModel> UpdatePollOptionAsync(Guid id, UpdatePollOptionDto poll);
 
         Task DeletePollOptionAsync(Guid id);
         Task DeletePollOptionsAsync(List<Guid> pollOptionsIds);

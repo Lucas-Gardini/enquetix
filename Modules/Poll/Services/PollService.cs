@@ -1,5 +1,6 @@
 ﻿using enquetix.Modules.Application;
 using enquetix.Modules.Application.EntityFramework;
+using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.DTOs;
 using enquetix.Modules.Poll.Repository;
@@ -7,36 +8,46 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enquetix.Modules.Poll.Services
 {
-    public class PollService(Context context, IAuthService authService) : IPollService
+    public class PollService(Context context, IAuthService authService, ICacheService cacheService) : IPollService
     {
         public async Task<PollModel> GetPollAsync(Guid id)
         {
-            return await context.Polls.FindAsync(id)
-                   ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found." } };
+            var result = await cacheService.CacheAsync($"poll:{id}", async () =>
+            {
+                return await context.Polls.FindAsync(id) ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found." } };
+            }, TimeSpan.FromMinutes(1));
+
+            return result!;
         }
 
         public async Task<List<PollModel>> GetPollsAsync(int startPage = 0, string? search = null)
         {
             const int pageSize = 20;
+            var userId = authService.GetLoggedUserId();
 
-            var query = context.Polls.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
+            var result = await cacheService.CacheAsync($"polls:{userId}:page:{startPage}:search:{search}", async () =>
             {
-                query = query.Where(p => p.Title.Contains(search) || p.Description.Contains(search));
-            }
+                var query = context.Polls.AsNoTracking().Where(p => p.CreatedBy == userId);
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    query = query.Where(p => p.Title.Contains(search) || p.Description.Contains(search));
+                }
+                return await query
+                    .OrderByDescending(p => p.StartDate)
+                    .Skip(startPage * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+            });
 
-            return await query
-                .OrderByDescending(p => p.CreatedAt)
-                .Skip(startPage * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            return result!;
         }
 
         public async Task<PollModel> CreatePollAsync(CreatePollDto poll)
         {
             if (poll.StartDate < DateTime.UtcNow || poll.EndDate < DateTime.UtcNow)
                 throw new HttpResponseException { Status = 400, Value = new { Message = "Invalid Date." } };
+            else if (poll.StartDate >= poll.EndDate)
+                throw new HttpResponseException { Status = 400, Value = new { Message = "Start date must be before end date." } };
 
             var newPoll = new PollModel
             {
@@ -49,6 +60,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.Polls.Add(newPoll);
             await context.SaveChangesAsync();
+            await cacheService.RemoveByPartialNameAsync($"polls:{newPoll.CreatedBy}");
             return newPoll;
         }
 
@@ -61,6 +73,8 @@ namespace enquetix.Modules.Poll.Services
             {
                 if (poll.StartDate < now || poll.EndDate < now)
                     throw new HttpResponseException { Status = 400, Value = new { Message = "Invalid Date in batch." } };
+                else if (poll.StartDate >= poll.EndDate)
+                    throw new HttpResponseException { Status = 400, Value = new { Message = "Start date must be before end date in batch." } };
 
                 return new PollModel
                 {
@@ -74,6 +88,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.Polls.AddRange(newPolls);
             await context.SaveChangesAsync();
+            await cacheService.RemoveByPartialNameAsync($"polls:{userId}");
             return newPolls;
         }
 
@@ -93,7 +108,8 @@ namespace enquetix.Modules.Poll.Services
 
             context.Polls.Update(existingPoll);
             await context.SaveChangesAsync();
-
+            await cacheService.RemoveAsync($"poll:{id}");
+            await cacheService.RemoveByPartialNameAsync($"polls:{existingPoll.CreatedBy}");
             return existingPoll;
         }
 
@@ -108,6 +124,8 @@ namespace enquetix.Modules.Poll.Services
 
             context.Polls.Remove(existingPoll);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{id}");
+            await cacheService.RemoveByPartialNameAsync($"polls:{existingPoll.CreatedBy}");
         }
 
         public async Task DeletePollsAsync(List<Guid> pollIds)
@@ -125,6 +143,8 @@ namespace enquetix.Modules.Poll.Services
 
             context.Polls.RemoveRange(polls);
             await context.SaveChangesAsync();
+            await cacheService.RemoveByPartialNameAsync($"polls:{userId}");
+            await cacheService.RemoveAsync([.. polls.Select(p => $"poll:{p.Id}")]);
         }
     }
 

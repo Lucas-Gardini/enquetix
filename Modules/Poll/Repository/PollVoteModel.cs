@@ -1,11 +1,13 @@
 ﻿using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.User.Repository;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace enquetix.Modules.Poll.Repository
 {
     [Table("PollVotes")]
-    public class PollVotesModel : GenericModel
+    [Index(nameof(PollId), nameof(UserId), IsUnique = true)]
+    public class PollVoteModel : GenericModel
     {
         [ForeignKey(nameof(Poll))]
         public Guid PollId { get; set; }
@@ -18,6 +20,6 @@ namespace enquetix.Modules.Poll.Repository
 
         public PollModel? Poll { get; set; }
         public UserModel? User { get; set; }
-        public PollOptionsModel? Option { get; set; }
+        public PollOptionModel? Option { get; set; }
     }
 }

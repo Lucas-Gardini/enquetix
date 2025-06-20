@@ -7,7 +7,7 @@ namespace enquetix.Modules.Poll.Repository
 {
     [Table("PollOptions")]
     [Index(nameof(PollId), nameof(OptionText), IsUnique = true)]
-    public class PollOptionsModel : GenericModel
+    public class PollOptionModel : GenericModel
     {
         [Required]
         public string OptionText { get; set; } = null!;

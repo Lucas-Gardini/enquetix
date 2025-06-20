@@ -15,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextPool<Context>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("RedisSession");
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "session:";
 });
 builder.Services.AddSingleton<IRedisService, RedisService>();
 builder.Services.AddSingleton<IMongoDBService, MongoDBService>();
@@ -53,8 +54,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPollService, PollService>();
 builder.Services.AddScoped<IPollOptionService, PollOptionService>();
 builder.Services.AddScoped<IPollVoteService, PollVoteService>();
+builder.Services.AddSingleton<IPollVoteQueueManager, PollVoteQueueManager>();
 
 var app = builder.Build();
+app.Services.GetRequiredService<IPollVoteQueueManager>();
 
 if (app.Environment.IsDevelopment())
 {

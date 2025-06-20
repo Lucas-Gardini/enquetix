@@ -28,6 +28,6 @@ namespace enquetix.Modules.Poll.Repository
         [ForeignKey(nameof(CreatedBy))]
         public UserModel? Creator { get; set; }
 
-        public ICollection<PollOptionsModel> Options { get; set; } = [];
+        public ICollection<PollOptionModel> Options { get; set; } = [];
     }
 }
