@@ -1,6 +1,7 @@
 using enquetix.Modules.Application;
 using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
+using enquetix.Modules.AuditLog.Services;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.Services;
 using enquetix.Modules.User.Services;
@@ -41,6 +42,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 
 // Services
+// -- Audit Log
+builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
+
 // -- Cache
 builder.Services.AddSingleton<ICacheService, CacheService>();
 

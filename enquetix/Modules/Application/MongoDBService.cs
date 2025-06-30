@@ -14,9 +14,7 @@ namespace enquetix.Modules.Application
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new InvalidOperationException("MongoDB connection string is missing.");
 
-            var uri = new Uri(connectionString!);
-
-            _databaseName = uri.AbsolutePath.TrimStart('/');
+            _databaseName = configuration.GetSection("App").GetValue<string>("Name")!;
             _client = new MongoClient(connectionString);
         }
 

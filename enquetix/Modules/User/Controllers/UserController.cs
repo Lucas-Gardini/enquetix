@@ -12,14 +12,7 @@ namespace enquetix.Modules.User.Controllers
         public async Task<IActionResult> Create([FromBody] CreateUserDto request)
         {
             var user = await service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var user = await service.GetByIdAsync(id);
-            return user is null ? NotFound() : Ok(user);
+            return CreatedAtAction(nameof(Create), new { id = user.Id }, user);
         }
     }
 }

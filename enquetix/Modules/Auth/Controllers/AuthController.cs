@@ -16,12 +16,16 @@ namespace enquetix.Modules.Auth.Controllers
             HttpContext.Session.SetString(SessionKeys.UserId, user.Id.ToString());
             HttpContext.Session.SetString(SessionKeys.Username, user.Username);
 
+            await authService.SaveAccessLogLogin();
+
             return Ok(new { message = "Logged in", user = new { user.Id, user.Username, user.Email } });
         }
 
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            await authService.SaveAccessLogLogout();
+
             HttpContext.Session.Clear();
             return Ok(new { message = "Logged out" });
         }
