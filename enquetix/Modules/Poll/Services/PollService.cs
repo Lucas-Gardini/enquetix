@@ -44,7 +44,7 @@ namespace enquetix.Modules.Poll.Services
 
         public async Task<PollModel> CreatePollAsync(CreatePollDto poll)
         {
-            if (poll.StartDate < DateTime.UtcNow || poll.EndDate < DateTime.UtcNow)
+            if (poll.EndDate < DateTime.UtcNow)
                 throw new HttpResponseException { Status = 400, Value = new { Message = "Invalid Date." } };
             else if (poll.StartDate >= poll.EndDate)
                 throw new HttpResponseException { Status = 400, Value = new { Message = "Start date must be before end date." } };

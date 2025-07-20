@@ -24,6 +24,17 @@ builder.Services.AddSingleton<IMongoDBService, MongoDBService>();
 builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 
 // Miscellaneous
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowAngularDev",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowCredentials()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = ".enquetix.session";
@@ -84,6 +95,7 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+app.UseCors("AllowAngularDev");
 app.UseSession();
 app.UseAuthorization();
 app.MapControllers();

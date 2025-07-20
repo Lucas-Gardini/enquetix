@@ -1,0 +1,92 @@
+@if (!isLoggedIn) {
+<form
+  [formGroup]="authForm"
+  (ngSubmit)="onSubmit()"
+  class="flex flex-col gap-5"
+>
+  <div class="flex flex-col gap-3">
+    <div>
+      <label for="email">Email</label>
+
+      <input
+        pInputText
+        id="email"
+        formControlName="email"
+        placeholder="Digite seu email"
+        [class.ng-invalid]="
+          authForm.get('email')?.invalid && authForm.get('email')?.touched
+        "
+        class="fluid w-full"
+        autocomplete="email"
+      />
+      @if (getFieldError('email')) {
+      <small class="p-error"> {{ getFieldError("email") }} </small>
+      }
+    </div>
+
+    <div>
+      <label for="password">Senha</label>
+      <p-password
+        formControlName="password"
+        placeholder="Digite sua senha"
+        [toggleMask]="true"
+        [feedback]="!isLoginMode"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        autocomplete="current-password"
+      ></p-password>
+      @if (getFieldError('password')) {
+      <small class="p-error"> {{ getFieldError("password") }} </small>
+      }
+    </div>
+  </div>
+
+  @if (!isLoginMode) {
+  <div>
+    <label for="confirmPassword">Confirmar Senha</label>
+    <p-password
+      formControlName="confirmPassword"
+      placeholder="Confirme sua senha"
+      [toggleMask]="true"
+      [feedback]="false"
+      styleClass="w-full"
+      inputStyleClass="w-full"
+      autocomplete="new-password"
+    ></p-password>
+
+    @if (!passwordsMatch() && authForm.get('confirmPassword')?.touched) {
+    <small class="p-error"> As senhas não coincidem </small>
+    }
+  </div>
+  }
+
+  <div>
+    <p-button
+      type="submit"
+      [label]="isLoginMode ? 'Entrar' : 'Criar Conta'"
+      [loading]="loading"
+      styleClass="w-full"
+      size="large"
+    ></p-button>
+  </div>
+</form>
+
+<div class="mt-2">
+  <p>
+    {{ isLoginMode ? "Não tem uma conta?" : "Já tem uma conta?" }}
+    <a
+      href="#"
+      (click)="toggleMode(); $event.preventDefault()"
+      class="text-primary"
+      >{{ isLoginMode ? "Criar conta" : "Entrar" }}</a
+    >
+  </p>
+</div>
+} @else {
+<div>
+  <div class="flex flex-row gap-2 items-center justify-between text-center">
+    <p>Você está logado como: {{ loggedUser?.username }}</p>
+    <p-button label="Sair" (onClick)="api.logout()" class="mt-3"></p-button>
+  </div>
+</div>
+}

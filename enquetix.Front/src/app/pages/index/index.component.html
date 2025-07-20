@@ -1,12 +1,40 @@
-<div>
-  <h1>Bem-vindo ao Enquetix!</h1>
+<section name="index" class="app-container my-auto pb-20">
+  <app-logo></app-logo>
 
-  <div class="search-bar">
-    <input type="text" placeholder="Buscar por..." />
-    <button>B</button>
-  </div>
+  <p-selectbutton
+    [options]="stateOptions"
+    [(ngModel)]="value"
+    optionLabel="label"
+    optionValue="value"
+    aria-labelledby="basic"
+    class="mb-10"
+    [allowEmpty]="false"
+  />
 
-  <span>ou</span>
+  <p-card [style]="{ width: '100%' }" class="bg-white">
+    @if (value === "polls") {
+    <div class="search-bar">
+      <input
+        type="text"
+        pInputText
+        placeholder="Buscar por..."
+        class="fluid w-full"
+      />
+      <p-button icon="pi pi-search" aria-label="Save" />
+    </div>
 
-  <button>Criar nova enquete!</button>
-</div>
+    <p class="text-center my-5">
+      <strong>ou</strong>
+    </p>
+
+    <p-button
+      [fluid]="true"
+      label="Criar nova enquete"
+      icon="pi pi-plus"
+      (onClick)="newPoll()"
+    />
+    } @else {
+    <app-login-form></app-login-form>
+    }
+  </p-card>
+</section>
