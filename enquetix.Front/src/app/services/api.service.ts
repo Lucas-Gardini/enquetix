@@ -98,7 +98,7 @@ export class ApiService {
       this.http
         .post(`${environment.apiUrl}/auth/logout`, {}, this.options())
         .subscribe({
-          next: () => resolve(),
+          next: () => resolve(window.location.reload()),
           error: (error) => reject(error),
         });
     });

@@ -5,6 +5,28 @@
   class="flex flex-col gap-5"
 >
   <div class="flex flex-col gap-3">
+    @if (!isLoginMode) {
+    <div>
+      <label for="username">Usuário</label>
+
+      <input
+        pInputText
+        id="username"
+        formControlName="username"
+        placeholder="Digite seu username"
+        [class.ng-invalid]="
+          authForm.get('username')?.invalid && authForm.get('username')?.touched
+        "
+        class="fluid w-full"
+        autocomplete="username"
+      />
+
+      @if (!passwordsMatch() && authForm.get('username')?.touched) {
+      <small class="p-error"> As senhas não coincidem </small>
+      }
+    </div>
+    }
+
     <div>
       <label for="email">Email</label>
 

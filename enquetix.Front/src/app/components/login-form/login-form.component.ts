@@ -82,9 +82,43 @@ export class LoginFormComponent implements OnInit {
     this.authForm.reset();
   }
 
+  async createAccount() {
+    if (this.authForm.valid && this.passwordsMatch()) {
+      this.loading = true;
+
+      try {
+        await this.api.post("users", this.authForm.value);
+        this.messageService.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Conta criada com sucesso!",
+        });
+
+        this.isLoginMode = false;
+        this.toggleMode();
+      } catch (error) {
+        this.messageService.add({
+          severity: "error",
+          summary: "Erro",
+          detail: "Falha ao criar conta. Verifique os dados informados.",
+        });
+      }
+    } else {
+      this.messageService.add({
+        severity: "error",
+        summary: "Error",
+        detail: "Formulário inválido ou senhas não coincidem",
+      });
+    }
+
+    this.loading = false;
+  }
+
   async onSubmit() {
     if (this.authForm.valid) {
       this.loading = true;
+
+      if (!this.isLoginMode) return await this.createAccount();
 
       try {
         await this.api.postFormData("auth/login", this.authForm.value);
@@ -104,6 +138,8 @@ export class LoginFormComponent implements OnInit {
         });
         this.loggedIn.emit(false);
       }
+
+      await this.ngOnInit();
 
       this.loading = false;
     } else {
