@@ -13,4 +13,9 @@ export const routes: Routes = [
         (m) => m.CreatePollComponent
       ),
   },
+  {
+    path: "polls/:id",
+    loadComponent: () =>
+      import("./pages/poll/poll.component").then((m) => m.PollComponent),
+  },
 ];

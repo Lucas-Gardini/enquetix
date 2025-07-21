@@ -20,9 +20,9 @@ namespace enquetix.Modules.Poll.Services
             return result!;
         }
 
-        public async Task<List<PollModel>> GetPollsAsync(int startPage = 0, string? search = null)
+        public async Task<GetPollsDto> GetPollsAsync(int startPage = 0, string? search = null)
         {
-            const int pageSize = 20;
+            const int pageSize = 5;
             var userId = authService.GetLoggedUserId();
 
             var result = await cacheService.CacheAsync($"polls:{userId}:page:{startPage}:search:{search}", async () =>
@@ -30,13 +30,32 @@ namespace enquetix.Modules.Poll.Services
                 var query = context.Polls.AsNoTracking().Where(p => p.CreatedBy == userId);
                 if (!string.IsNullOrWhiteSpace(search))
                 {
-                    query = query.Where(p => p.Title.Contains(search) || p.Description.Contains(search));
+                    search = search?.ToString().ToLower()?.Trim()!;
+                    query = query.Where(p => p.Title.ToLower().Contains(search) || p.Description.ToLower().Contains(search));
                 }
-                return await query
-                    .OrderByDescending(p => p.StartDate)
+
+                var result = await query
+                    .OrderByDescending(p => p.CreatedAt)
                     .Skip(startPage * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
+
+                var pollIds = result.Select(p => p.Id).ToList();
+                var voteCounts = await context.PollVotes
+                    .Where(v => pollIds.Contains(v.PollId))
+                    .GroupBy(v => v.PollId)
+                    .Select(g => new { PollId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.PollId, g => g.Count);
+
+                return new GetPollsDto
+                {
+                    Polls = [.. result.Select(poll =>
+                    {
+                        poll.TotalVotes = voteCounts.TryGetValue(poll.Id, out var count) ? count : 0;
+                        return poll;
+                    })],
+                    Total = await query.CountAsync(),
+                };
             });
 
             return result!;
@@ -52,9 +71,9 @@ namespace enquetix.Modules.Poll.Services
             var newPoll = new PollModel
             {
                 Title = poll.Title,
-                Description = poll.Description,
-                StartDate = poll.StartDate,
-                EndDate = poll.EndDate,
+                Description = poll.Description ?? "",
+                StartDate = poll.StartDate!,
+                EndDate = poll.EndDate!,
                 CreatedBy = authService.GetLoggedUserId()
             };
 
@@ -151,7 +170,7 @@ namespace enquetix.Modules.Poll.Services
     public interface IPollService
     {
         Task<PollModel> GetPollAsync(Guid id);
-        Task<List<PollModel>> GetPollsAsync(int startPage = 0, string? search = null);
+        Task<GetPollsDto> GetPollsAsync(int startPage = 0, string? search = null);
 
         Task<PollModel> CreatePollAsync(CreatePollDto poll);
         Task<List<PollModel>> CreatePollsAsync(List<CreatePollDto> polls);

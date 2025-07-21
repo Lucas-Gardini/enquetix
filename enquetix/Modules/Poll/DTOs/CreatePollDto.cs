@@ -9,16 +9,16 @@ namespace enquetix.Modules.Poll.DTOs
         public string Title { get; set; } = null!;
 
         [StringLength(500)]
-        public string Description { get; set; } = null!;
+        public string? Description { get; set; } = null!;
 
-        [Required]
+        //[Required]
         [DataType(DataType.DateTime)]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:yyyy-MM-ddTHH:mm:ss}")]
-        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset? StartDate { get; set; }
 
-        [Required]
+        //[Required]
         [DataType(DataType.DateTime)]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:yyyy-MM-ddTHH:mm:ss}")]
-        public DateTimeOffset EndDate { get; set; }
+        public DateTimeOffset? EndDate { get; set; }
     }
 }

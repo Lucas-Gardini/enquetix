@@ -1,1 +1,45 @@
-<p>polls works!</p>
+<div
+  [style]="{ width: '100%', maxHeight: '50vh' }"
+  class="bg-white overflow-auto"
+>
+  @if (firstLoaded) {
+  <p-table
+    [value]="polls"
+    [paginator]="true"
+    [rows]="5"
+    [lazy]="true"
+    [totalRecords]="total"
+    [loading]="loading"
+    (onLazyLoad)="pageChange($event)"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} entradas"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: auto">#</th>
+        <th style="width: 23%">Título</th>
+        <th style="width: 28%">Descrição</th>
+        <th style="width: 7%">Votos</th>
+        <th style="width: 15%">Começa Em</th>
+        <th style="width: 15%">Termina Em</th>
+        <th style="width: 15%">Criado Em</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-poll>
+      <tr>
+        <td>
+          <a [routerLink]="['/polls', poll.id]">
+            <i class="pi pi-eye"></i>
+          </a>
+        </td>
+        <td>{{ poll.title }}</td>
+        <td>{{ poll.description }}</td>
+        <td>{{ poll.totalVotes }}</td>
+        <td>{{ poll.startDate | date }}</td>
+        <td>{{ poll.endDate | date }}</td>
+        <td>{{ poll.createdAt | date }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+  }
+</div>

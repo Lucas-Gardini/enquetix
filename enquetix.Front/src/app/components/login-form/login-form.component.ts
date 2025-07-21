@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, EventEmitter, OnInit, Output } from "@angular/core";
 import {
   FormBuilder,
   FormGroup,
@@ -33,6 +33,8 @@ export class LoginFormComponent implements OnInit {
   loggedUser: { id: string; username: string } | null = null;
   loading = false;
 
+  @Output() loggedIn = new EventEmitter<boolean>();
+
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
@@ -52,6 +54,11 @@ export class LoginFormComponent implements OnInit {
         id: logged.id,
         username: logged.username,
       };
+      this.loggedIn.emit(true);
+    } else {
+      this.isLoggedIn = false;
+      this.loggedUser = null;
+      this.loggedIn.emit(false);
     }
   }
 
@@ -88,12 +95,14 @@ export class LoginFormComponent implements OnInit {
         });
 
         this.isLoggedIn = true;
+        this.loggedIn.emit(true);
       } catch (error) {
         this.messageService.add({
           severity: "error",
           summary: "Erro",
           detail: "Falha ao realizar login. Verifique suas credenciais.",
         });
+        this.loggedIn.emit(false);
       }
 
       this.loading = false;

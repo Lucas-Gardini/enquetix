@@ -16,11 +16,11 @@ namespace enquetix.Modules.Poll.Repository
         [Required]
         public string Description { get; set; } = null!;
 
-        [Required]
-        public DateTimeOffset StartDate { get; set; }
+        //[Required]
+        public DateTimeOffset? StartDate { get; set; }
 
-        [Required]
-        public DateTimeOffset EndDate { get; set; }
+        //[Required]
+        public DateTimeOffset? EndDate { get; set; }
 
         [Required]
         public Guid CreatedBy { get; set; }
@@ -29,5 +29,8 @@ namespace enquetix.Modules.Poll.Repository
         public UserModel? Creator { get; set; }
 
         public ICollection<PollOptionModel> Options { get; set; } = [];
+
+        [NotMapped]
+        public int TotalVotes { get; set; }
     }
 }

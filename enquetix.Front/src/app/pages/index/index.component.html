@@ -7,8 +7,9 @@
     optionLabel="label"
     optionValue="value"
     aria-labelledby="basic"
-    class="mb-10"
+    class="mb-2"
     [allowEmpty]="false"
+    [disabled]="!loggedIn"
   />
 
   <p-card [style]="{ width: '100%' }" class="bg-white">
@@ -19,13 +20,26 @@
         pInputText
         placeholder="Buscar por..."
         class="fluid w-full"
+        [(ngModel)]="searchTerm"
       />
-      <p-button icon="pi pi-search" aria-label="Save" />
+      @if (searchTerm) {
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        aria-label="Cancelar busca"
+        (onClick)="setSearchTerm('')"
+      />
+      }
+      <p-button
+        icon="pi pi-search"
+        aria-label="Buscar"
+        (onClick)="setSearchTerm(searchTerm)"
+      />
     </div>
 
-    <p class="text-center my-5">
-      <strong>ou</strong>
-    </p>
+    <app-polls></app-polls>
+
+    <div class="my-1"></div>
 
     <p-button
       [fluid]="true"
@@ -34,7 +48,7 @@
       (onClick)="newPoll()"
     />
     } @else {
-    <app-login-form></app-login-form>
+    <app-login-form (loggedIn)="loggedIn = $event"></app-login-form>
     }
   </p-card>
 </section>

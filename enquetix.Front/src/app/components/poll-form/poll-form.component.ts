@@ -45,9 +45,9 @@ export class PollFormComponent {
   ) {
     this.pollForm = this.fb.group({
       title: ["", Validators.required],
-      description: [""],
-      startDate: [null, Validators.required],
-      endDate: [null, Validators.required],
+      description: [null, Validators.nullValidator],
+      startDate: [null, Validators.nullValidator],
+      endDate: [null, Validators.nullValidator],
     });
   }
 
@@ -57,6 +57,18 @@ export class PollFormComponent {
         severity: "warn",
         summary: "Formulário inválido",
         detail: "Preencha todos os campos obrigatórios.",
+      });
+      return;
+    }
+
+    if (
+      String(this.pollForm.value.title).trim() === "" ||
+      this.pollForm.value.title.length < 5
+    ) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Título inválido",
+        detail: "O título deve ter pelo menos 5 caracteres.",
       });
       return;
     }
@@ -77,7 +89,7 @@ export class PollFormComponent {
         detail: "Enquete criada com sucesso!",
       });
 
-      this.pollForm.reset();
+      this.cancel();
     } catch (err) {
       this.messageService.add({
         severity: "error",
