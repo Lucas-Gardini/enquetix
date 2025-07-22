@@ -107,4 +107,10 @@ app.MapControllers();
 // -- Hubs
 app.MapHub<PollHub>("/pollhub");
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<Context>();
+    await db.Database.MigrateAsync();
+}
+
 await app.RunAsync();
