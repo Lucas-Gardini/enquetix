@@ -15,13 +15,20 @@ export class PollService {
       return false;
     }
 
-    const loggedUser = await this.api.getUserProfile();
-    if (!loggedUser) {
-      this.router.navigate(["/login"]);
+    let loggedUser: { id: string } | null = null;
+
+    try {
+      loggedUser = await this.api.getUserProfile();
+      if (!loggedUser) {
+        this.router.navigate(["/"]);
+        return false;
+      }
+    } catch (error) {
+      this.router.navigate(["/"]);
       return false;
     }
 
-    return poll?.createdBy === loggedUser.id;
+    return poll?.createdBy === loggedUser?.id;
   }
 
   public async loadPollDetails(pollId: string): Promise<IPollDetails | null> {

@@ -29,10 +29,10 @@ builder.Services.AddSignalR();
 // Miscellaneous
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: "AllowAngularDev",
+    options.AddPolicy(name: "AllowFront",
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200")
+            policy.WithOrigins("http://localhost:4200", "http://localhost")
                   .AllowCredentials()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
@@ -99,7 +99,7 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-app.UseCors("AllowAngularDev");
+app.UseCors("AllowFront");
 app.UseSession();
 app.UseAuthorization();
 app.MapControllers();

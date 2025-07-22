@@ -17,5 +17,8 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine3.20 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+
+RUN apk add wait4x
+
 EXPOSE 5261
-CMD ["dotnet", "enquetix.dll"]
+CMD ["wait4x", "tcp", "rabbitmq:5672", "-t", "30s", "--", "dotnet", "enquetix.dll"]

@@ -116,14 +116,14 @@ export class PollComponent implements OnDestroy {
       } else throw new Error();
     } catch (error) {
       console.error("Erro ao carregar detalhes da enquete:", error);
-      this.messageService.add({
-        severity: "error",
-        summary: "Erro",
-        detail: "Não foi possível carregar os detalhes da enquete.",
-      });
 
       try {
         await this.api.getUserProfile();
+        this.messageService.add({
+          severity: "error",
+          summary: "Erro",
+          detail: "Não foi possível carregar os detalhes da enquete.",
+        });
       } catch {
         this.messageService.add({
           severity: "error",
@@ -132,7 +132,8 @@ export class PollComponent implements OnDestroy {
         });
       }
 
-      this.router.navigate(["/"]);
+      window.location.href = "/";
+      return;
     }
   }
 

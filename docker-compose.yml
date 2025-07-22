@@ -1,0 +1,83 @@
+services:
+    postgres:
+        image: postgres:latest
+        environment:
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: supersecretpassword
+            POSTGRES_DB: enquetix
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - backend
+
+    mongo:
+        image: mongo:latest
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: admin
+            MONGO_INITDB_ROOT_PASSWORD: supersecretpassword
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongo_data:/data/db
+        networks:
+            - backend
+
+    rabbitmq:
+        image: rabbitmq:management
+        environment:
+            RABBITMQ_DEFAULT_USER: admin
+            RABBITMQ_DEFAULT_PASS: supersecretpassword
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        networks:
+            - backend
+
+    redis:
+        image: redis:latest
+        command: redis-server --requirepass supersecretpassword
+        ports:
+            - "6379:6379"
+        networks:
+            - backend
+
+    back:
+        image: enquetix.back
+        build:
+            context: .
+            dockerfile: enquetix/dockerfile
+        depends_on:
+            - postgres
+            - mongo
+            - redis
+            - rabbitmq
+        environment:
+            - ConnectionStrings__PostgreSql=Host=postgres;Port=5432;Database=enquetix;Username=admin;Password=supersecretpassword
+            - ConnectionStrings__MongoDB=mongodb://admin:supersecretpassword@mongo:27017
+            - ConnectionStrings__Redis=redis:6379,password=supersecretpassword
+            - ConnectionStrings__RabbitMQ=amqp://admin:supersecretpassword@rabbitmq:5672
+        ports:
+            - "5261:8080"
+        networks:
+            - backend
+
+    front:
+        image: enquetix.front
+        build:
+            context: ./enquetix.Front
+            dockerfile: dockerfile
+        ports:
+            - "80:80"
+        depends_on:
+            - back
+        networks:
+            - backend
+
+networks:
+    backend:
+
+volumes:
+    postgres_data:
+    mongo_data:
