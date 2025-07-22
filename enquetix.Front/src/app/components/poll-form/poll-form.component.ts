@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, Input, OnInit } from "@angular/core";
 import {
   FormBuilder,
   FormGroup,
@@ -16,6 +16,7 @@ import { TextareaModule } from "primeng/textarea";
 import { DatePickerModule } from "primeng/datepicker";
 import { ApiService } from "../../services/api.service";
 import { Router } from "@angular/router";
+import { IPoll } from "../../pages/poll/poll.component";
 
 @Component({
   selector: "app-poll-form",
@@ -33,9 +34,11 @@ import { Router } from "@angular/router";
     DatePickerModule,
   ],
 })
-export class PollFormComponent {
+export class PollFormComponent implements OnInit {
   pollForm: FormGroup;
   loading = false;
+
+  @Input() pollData: IPoll | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -49,6 +52,17 @@ export class PollFormComponent {
       startDate: [null, Validators.nullValidator],
       endDate: [null, Validators.nullValidator],
     });
+  }
+
+  ngOnInit() {
+    if (this.pollData) {
+      this.pollForm.patchValue({
+        title: this.pollData.title,
+        description: this.pollData.description,
+        startDate: new Date(this.pollData.startDate),
+        endDate: new Date(this.pollData.endDate),
+      });
+    }
   }
 
   async onSubmit() {
@@ -81,13 +95,26 @@ export class PollFormComponent {
     };
 
     try {
-      await this.api.post("polls", payload);
+      if (!this.pollData) {
+        await this.api.post("polls", payload);
 
-      this.messageService.add({
-        severity: "success",
-        summary: "Sucesso",
-        detail: "Enquete criada com sucesso!",
-      });
+        this.messageService.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Enquete criada com sucesso!",
+        });
+      } else {
+        if (!payload.startDate) payload.startDate = null;
+        if (!payload.endDate) payload.endDate = null;
+
+        await this.api.put(`polls/${this.pollData.id}`, payload);
+
+        this.messageService.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Enquete atualizada com sucesso!",
+        });
+      }
 
       this.cancel();
     } catch (err) {

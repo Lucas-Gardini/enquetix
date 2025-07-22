@@ -53,7 +53,7 @@
   </div>
 
   <p-button
-    label="Criar Enquete"
+    [label]="(pollData ? 'Atualizar' : 'Criar') + ' Enquete'"
     type="submit"
     [loading]="loading"
     styleClass="w-full"

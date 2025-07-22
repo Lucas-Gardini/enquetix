@@ -1,0 +1,16 @@
+<section name="create-edit-poll" class="app-container my-auto pb-20">
+  @if(!loading) {
+  <app-logo @fadeInOut></app-logo>
+
+  <p-card @fadeInOut [style]="{ width: '100%' }" class="bg-white">
+    <app-poll-form [pollData]="pollData?.pollDetails!"></app-poll-form>
+  </p-card>
+  } @else {
+  <p-progress-spinner
+    @fadeInOut
+    fill="transparent"
+    animationDuration=".5s"
+    [style]="{ width: '200px', height: '200px' }"
+  />
+  }
+</section>

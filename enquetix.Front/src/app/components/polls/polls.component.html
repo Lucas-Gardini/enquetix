@@ -28,7 +28,7 @@
     <ng-template pTemplate="body" let-poll>
       <tr>
         <td>
-          <a [routerLink]="['/polls', poll.id]">
+          <a [routerLink]="['/poll']" [queryParams]="{ id: poll?.id }">
             <i class="pi pi-eye"></i>
           </a>
         </td>

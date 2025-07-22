@@ -14,7 +14,41 @@ namespace enquetix.Modules.Poll.Services
         {
             var result = await cacheService.CacheAsync($"poll:{id}", async () =>
             {
-                return await context.Polls.FindAsync(id) ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found." } };
+                var poll = await context.Polls
+                .Select(p => new PollModel
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Description = p.Description,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    CreatedBy = p.CreatedBy,
+                    CreatedAt = p.CreatedAt,
+                    Creator = new User.Repository.UserModel
+                    {
+                        Id = p.Creator!.Id,
+                        Username = p.Creator.Username,
+                    },
+                })
+                .FirstOrDefaultAsync(p => p.Id == id) ?? throw new HttpResponseException { Status = 404, Value = new { Message = "Poll not found." } };
+
+                if (await context.PollOptions.AnyAsync(po => po.PollId == poll.Id))
+                {
+                    poll.Options = await context.PollOptions
+                        .Where(po => po.PollId == poll.Id)
+                        .Select(po => new PollOptionModel // <- Evitando join de volta pra poll
+                        {
+                            Id = po.Id,
+                            OptionText = po.OptionText,
+                            PollId = po.PollId,
+                            TotalVotes = context.PollVotes.Count(v => v.PollId == poll.Id && v.OptionId == po.Id)
+                        })
+                        .ToListAsync();
+                }
+
+                poll.TotalVotes = poll.Options.Sum(po => po.TotalVotes);
+
+                return poll;
             }, TimeSpan.FromMinutes(1));
 
             return result!;
@@ -98,7 +132,7 @@ namespace enquetix.Modules.Poll.Services
                 return new PollModel
                 {
                     Title = poll.Title,
-                    Description = poll.Description,
+                    Description = poll.Description!,
                     StartDate = poll.StartDate,
                     EndDate = poll.EndDate,
                     CreatedBy = userId
@@ -124,6 +158,8 @@ namespace enquetix.Modules.Poll.Services
             existingPoll.Description = poll.Description ?? existingPoll.Description;
             existingPoll.StartDate = poll.StartDate ?? existingPoll.StartDate;
             existingPoll.EndDate = poll.EndDate ?? existingPoll.EndDate;
+
+            existingPoll.Creator = null;
 
             context.Polls.Update(existingPoll);
             await context.SaveChangesAsync();

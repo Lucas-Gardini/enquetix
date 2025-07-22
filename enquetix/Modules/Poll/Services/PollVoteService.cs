@@ -63,7 +63,7 @@ namespace enquetix.Modules.Poll.Services
 
             var pollVote = await cacheService.CacheAsync(cacheKey, async () =>
             {
-                var poll = await context.PollVotes
+                var pollV = await context.PollVotes
                     .Where(v => v.PollId == pollId && v.UserId == userId)
                     .Include(v => v.Option)
                     .Select(v => new GetPollVoteDto
@@ -73,10 +73,10 @@ namespace enquetix.Modules.Poll.Services
                     })
                     .FirstOrDefaultAsync();
 
-                return poll ?? throw new HttpResponseException
+                return pollV ?? throw new HttpResponseException
                 {
                     Status = 404,
-                    Value = new { Message = "Poll not found." }
+                    Value = new { Message = "Poll vote not found." }
                 };
             }, TimeSpan.FromMinutes(1));
 
@@ -163,6 +163,7 @@ namespace enquetix.Modules.Poll.Services
             }
 
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{createVoteDto.PollId}");
             await cacheService.RemoveAsync($"pollVote:{createVoteDto.PollId}:{createVoteDto.UserId}");
             await cacheService.RemoveAsync($"pollVotes:{createVoteDto.PollId}");
         }

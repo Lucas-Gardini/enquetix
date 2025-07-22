@@ -52,7 +52,7 @@ export class IndexComponent implements OnInit {
   }
 
   public newPoll() {
-    this.router.navigate(["/create-poll"]);
+    this.router.navigate(["/create-edit-poll"]);
   }
 
   public setSearchTerm(term: string) {

@@ -54,6 +54,7 @@ namespace enquetix.Modules.Poll.Services
             context.PollOptions.Add(option);
             await context.SaveChangesAsync();
             await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
+            await cacheService.RemoveAsync($"poll:{pollId}");
             return option;
         }
 
@@ -87,6 +88,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.AddRange(options);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{pollId}");
             await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
             return options;
         }
@@ -98,6 +100,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.Update(existingOption);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{existingOption.PollId}");
             await cacheService.RemoveAsync($"pollOption:{id}");
             await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
             return existingOption;
@@ -116,6 +119,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.Remove(existingOption);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{existingOption.PollId}");
             await cacheService.RemoveAsync($"pollOption:{id}");
             await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
         }
@@ -141,6 +145,7 @@ namespace enquetix.Modules.Poll.Services
 
             foreach (var option in options)
             {
+                await cacheService.RemoveAsync($"poll:{option.PollId}");
                 await cacheService.RemoveAsync($"pollOption:{option.Id}");
                 await cacheService.RemoveAsync($"pollOptions:poll:{option.PollId}");
             }
@@ -164,6 +169,7 @@ namespace enquetix.Modules.Poll.Services
 
             context.PollOptions.RemoveRange(options);
             await context.SaveChangesAsync();
+            await cacheService.RemoveAsync($"poll:{pollId}");
             await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
             foreach (var option in options)
             {

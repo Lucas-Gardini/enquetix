@@ -7,14 +7,14 @@ export const routes: Routes = [
       import("./pages/index/index.component").then((m) => m.IndexComponent),
   },
   {
-    path: "create-poll",
+    path: "create-edit-poll",
     loadComponent: () =>
-      import("./pages/create-poll/create-poll.component").then(
+      import("./pages/create-edit-poll/create-edit-poll.component").then(
         (m) => m.CreatePollComponent
       ),
   },
   {
-    path: "polls/:id",
+    path: "poll",
     loadComponent: () =>
       import("./pages/poll/poll.component").then((m) => m.PollComponent),
   },

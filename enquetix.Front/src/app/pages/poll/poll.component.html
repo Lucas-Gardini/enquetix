@@ -2,14 +2,141 @@
   <app-logo></app-logo>
 
   <p-card [style]="{ width: '100%' }" class="bg-white">
-    TODO: Exibir opções da enquete, seu número de votos e o botão para votar
+    <ng-template #header>
+      @if (pendingVote === "waiting-response") {
+      <p-progressbar
+        mode="indeterminate"
+        [style]="{ height: '6px' }"
+        color="#1e2939"
+      />
+      }
 
-    <p-button
-      label="Cancelar"
-      type="button"
-      severity="secondary"
-      (onClick)="cancel()"
-      styleClass="w-full"
-    ></p-button>
+      <div class="flex flex-col gap-2 p-[1.25rem] pb-0 text-2xl">
+        <h1 class="font-semibold" style="line-height: 20px">
+          <span>
+            {{ poll?.title || "Carregando enquete..." }}
+            @if (pollCreatedByLoggedUser) {
+            <a
+              [routerLink]="['/create-edit-poll']"
+              [queryParams]="{ id: poll?.id }"
+              class="text-primary"
+              (click)="$event.preventDefault()"
+              pTooltip="Editar enquete"
+              tooltipPosition="right"
+            >
+              <i class="pi pi-pencil"></i>
+            </a>
+            }
+          </span>
+          <br />
+          <span class="text-xs">
+            {{ poll?.creator?.username || "" }} |
+            {{ poll?.startDate ?? poll?.createdAt | date : "dd/MM/yyyy HH:mm" }}
+            {{poll?.endDate ? `-> ${poll?.endDate | date : 'dd/MM/yyyy HH:mm'}` : ''}}
+          </span>
+        </h1>
+
+        <div class="flex-1 text-sm" style="white-space: pre-line">
+          {{ poll?.description }}
+        </div>
+      </div>
+    </ng-template>
+
+    <p-virtualscroller
+      [items]="poll?.options ?? []"
+      [itemSize]="50"
+      [autoSize]="true"
+      scrollHeight="205px"
+      styleClass="border border-surface"
+      [style]="{ width: '100%', height: '205px' }"
+    >
+      <ng-template #item let-item let-options="options">
+        <div class="flex flex-col p-2" style="height: 50px">
+          <div class="flex flex-row gap-1 items-center mb-1">
+            <p-radiobutton
+              [name]="item.id"
+              [value]="item.id"
+              [(ngModel)]="pendingVote"
+              [inputId]="`radio-${item.id}`"
+            />
+            <span>
+              {{ item.optionText }} ({{ item.totalVotes || 0 }} votos)
+            </span>
+
+            @if (pollCreatedByLoggedUser) {
+            <i
+              class="ml-auto pi pi-trash hover:cursor-pointer"
+              (click)="removeOption(item.id, $event)"
+            ></i>
+            }
+          </div>
+          <p-progressbar
+            [value]="calcularPorcentagemVotos(item.totalVotes)"
+            [showValue]="false"
+          />
+        </div>
+      </ng-template>
+    </p-virtualscroller>
+
+    @if (pollCreatedByLoggedUser) {
+    <div class="w-full flex flex-row items-center justify-end hover:underline">
+      <p-button
+        (click)="op.toggle($event)"
+        icon="pi pi-plus"
+        label=" Nova Opção"
+        size="small"
+        variant="text"
+        severity="secondary"
+      />
+      <p-popover #op>
+        <div class="flex flex-row gap-1 w-auto">
+          <input
+            type="text"
+            pInputText
+            placeholder="Texto da nova opção"
+            [(ngModel)]="newOptionText"
+          />
+          <p-button
+            icon="pi pi-check"
+            (click)="addOption()"
+            [loading]="loadingNewOption"
+          />
+        </div>
+      </p-popover>
+    </div>
+    }
+
+    <div
+      class="flex flex-row w-full gap-2"
+      [style]="{ marginTop: pollCreatedByLoggedUser ? 0 : '1rem' }"
+    >
+      <p-button
+        label="Fechar"
+        type="button"
+        severity="secondary"
+        (onClick)="cancel()"
+        class="w-[100px]"
+        styleClass="w-[100px]"
+      ></p-button>
+
+      <p-button
+        [disabled]="!alreadyVoted"
+        label="Remover Voto"
+        type="button"
+        severity="contrast"
+        (onClick)="saveVote(true)"
+        class="w-[150px]"
+        styleClass="w-[150px]"
+      ></p-button>
+
+      <p-button
+        [disabled]="!pendingVote"
+        label="Confirmar/Alterar Voto"
+        type="button"
+        (onClick)="saveVote()"
+        class="w-full"
+        styleClass="w-full"
+      ></p-button>
+    </div>
   </p-card>
 </section>

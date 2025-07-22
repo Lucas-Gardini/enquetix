@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace enquetix.Modules.Poll.Repository
 {
@@ -15,7 +16,11 @@ namespace enquetix.Modules.Poll.Repository
         [Required]
         public Guid PollId { get; set; }
 
+        [JsonIgnore]
         [ForeignKey(nameof(PollId))]
         public PollModel? Poll { get; set; }
+
+        [NotMapped]
+        public int TotalVotes { get; set; } = 0;
     }
 }
