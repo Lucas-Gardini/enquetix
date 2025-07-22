@@ -3,6 +3,7 @@ using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
 using enquetix.Modules.AuditLog.Services;
 using enquetix.Modules.Auth.Services;
+using enquetix.Modules.Poll.Hubs;
 using enquetix.Modules.Poll.Services;
 using enquetix.Modules.User.Services;
 using Microsoft.AspNetCore.Diagnostics;
@@ -22,6 +23,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddSingleton<IRedisService, RedisService>();
 builder.Services.AddSingleton<IMongoDBService, MongoDBService>();
 builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
+builder.Services.AddSignalR();
+
 
 // Miscellaneous
 builder.Services.AddCors(options =>
@@ -69,6 +72,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPollService, PollService>();
 builder.Services.AddScoped<IPollOptionService, PollOptionService>();
 builder.Services.AddScoped<IPollVoteService, PollVoteService>();
+builder.Services.AddScoped<IPollHubService, PollHubService>();
 builder.Services.AddSingleton<IPollVoteQueueManager, PollVoteQueueManager>();
 
 var app = builder.Build();
@@ -99,5 +103,8 @@ app.UseCors("AllowAngularDev");
 app.UseSession();
 app.UseAuthorization();
 app.MapControllers();
+
+// -- Hubs
+app.MapHub<PollHub>("/pollhub");
 
 await app.RunAsync();

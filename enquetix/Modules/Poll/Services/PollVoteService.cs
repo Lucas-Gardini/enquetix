@@ -3,6 +3,7 @@ using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.DTOs;
+using enquetix.Modules.Poll.Hubs;
 using enquetix.Modules.Poll.Repository;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -42,7 +43,7 @@ namespace enquetix.Modules.Poll.Services
 
     // ----------------------------------------------------------------------
 
-    public class PollVoteService(Context context, IPollVoteQueueManager pollVoteQueueManager, IAuthService authService, ICacheService cacheService) : IPollVoteService
+    public class PollVoteService(Context context, IPollVoteQueueManager pollVoteQueueManager, IAuthService authService, ICacheService cacheService, IPollHubService pollHubService) : IPollVoteService
     {
         public async Task<bool> SendVote(Guid pollId, CreateUpdatePollVoteInputDto createUpdateVoteInputDto)
         {
@@ -135,6 +136,7 @@ namespace enquetix.Modules.Poll.Services
 
             var existingVote = await context.PollVotes
                 .FirstOrDefaultAsync(v => v.PollId == createVoteDto.PollId && v.UserId == createVoteDto.UserId);
+            var previousOptionId = existingVote?.OptionId;
 
             if (existingVote != null)
             {
@@ -166,6 +168,18 @@ namespace enquetix.Modules.Poll.Services
             await cacheService.RemoveAsync($"poll:{createVoteDto.PollId}");
             await cacheService.RemoveAsync($"pollVote:{createVoteDto.PollId}:{createVoteDto.UserId}");
             await cacheService.RemoveAsync($"pollVotes:{createVoteDto.PollId}");
+
+            if (createVoteDto.OptionId != null || previousOptionId != null)
+            {
+                var totalVotes = await context.PollVotes.CountAsync(v => v.PollId == createVoteDto.PollId && v.OptionId == (Guid)(createVoteDto.OptionId! ?? previousOptionId!));
+                await pollHubService.NotifyPollVotesChanged(createVoteDto.PollId.ToString(), createVoteDto.OptionId?.ToString()!, totalVotes);
+            }
+
+            if (previousOptionId != null)
+            {
+                var totalPreviousVote = await context.PollVotes.CountAsync(v => v.PollId == createVoteDto.PollId && v.OptionId == previousOptionId!);
+                await pollHubService.NotifyPollVotesChanged(createVoteDto.PollId.ToString(), previousOptionId.ToString()!, totalPreviousVote);
+            }
         }
     }
 

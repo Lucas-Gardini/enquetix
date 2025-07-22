@@ -130,6 +130,11 @@ export class PollFormComponent implements OnInit {
 
   cancel() {
     this.pollForm.reset();
-    this.router.navigate(["/"]);
+
+    if (this.pollData) {
+      this.router.navigate(["/poll"], {
+        queryParams: { id: this.pollData.id },
+      });
+    } else this.router.navigate(["/"]);
   }
 }

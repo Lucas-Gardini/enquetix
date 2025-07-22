@@ -3,28 +3,38 @@
 
   <p-card [style]="{ width: '100%' }" class="bg-white">
     <ng-template #header>
-      @if (pendingVote === "waiting-response") {
-      <p-progressbar
-        mode="indeterminate"
-        [style]="{ height: '6px' }"
-        color="#1e2939"
-      />
-      }
-
       <div class="flex flex-col gap-2 p-[1.25rem] pb-0 text-2xl">
         <h1 class="font-semibold" style="line-height: 20px">
           <span>
             {{ poll?.title || "Carregando enquete..." }}
             @if (pollCreatedByLoggedUser) {
             <a
-              [routerLink]="['/create-edit-poll']"
-              [queryParams]="{ id: poll?.id }"
-              class="text-primary"
-              (click)="$event.preventDefault()"
-              pTooltip="Editar enquete"
+              class="text-primary mr-2 hover:cursor-pointer"
+              (click)="copyPollLink(); $event.preventDefault()"
+              pTooltip="Copiar link da enquete"
               tooltipPosition="right"
             >
+              <i class="pi pi-copy"></i>
+            </a>
+
+            <a
+              [routerLink]="['/create-edit-poll']"
+              [queryParams]="{ id: poll?.id }"
+              class="text-primary mr-2 hover:cursor-pointer"
+              (click)="$event.preventDefault()"
+              pTooltip="Editar enquete"
+              tooltipPosition="bottom"
+            >
               <i class="pi pi-pencil"></i>
+            </a>
+
+            <a
+              class="text-primary hover:cursor-pointer"
+              (click)="deletePoll($event); $event.preventDefault()"
+              pTooltip="Excluir enquete"
+              tooltipPosition="right"
+            >
+              <i class="pi pi-trash"></i>
             </a>
             }
           </span>

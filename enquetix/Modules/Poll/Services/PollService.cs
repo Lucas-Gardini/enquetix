@@ -3,12 +3,13 @@ using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.DTOs;
+using enquetix.Modules.Poll.Hubs;
 using enquetix.Modules.Poll.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace enquetix.Modules.Poll.Services
 {
-    public class PollService(Context context, IAuthService authService, ICacheService cacheService) : IPollService
+    public class PollService(Context context, IAuthService authService, ICacheService cacheService, IPollHubService pollHubService) : IPollService
     {
         public async Task<PollModel> GetPollAsync(Guid id)
         {
@@ -165,6 +166,9 @@ namespace enquetix.Modules.Poll.Services
             await context.SaveChangesAsync();
             await cacheService.RemoveAsync($"poll:{id}");
             await cacheService.RemoveByPartialNameAsync($"polls:{existingPoll.CreatedBy}");
+
+            await pollHubService.NotifyPollUpdated(id.ToString(), await this.GetPollAsync(existingPoll.Id));
+
             return existingPoll;
         }
 
@@ -181,6 +185,8 @@ namespace enquetix.Modules.Poll.Services
             await context.SaveChangesAsync();
             await cacheService.RemoveAsync($"poll:{id}");
             await cacheService.RemoveByPartialNameAsync($"polls:{existingPoll.CreatedBy}");
+
+            await pollHubService.NotifyPollDeleted(id.ToString());
         }
 
         public async Task DeletePollsAsync(List<Guid> pollIds)
@@ -200,9 +206,13 @@ namespace enquetix.Modules.Poll.Services
             await context.SaveChangesAsync();
             await cacheService.RemoveByPartialNameAsync($"polls:{userId}");
             await cacheService.RemoveAsync([.. polls.Select(p => $"poll:{p.Id}")]);
+
+            foreach (var poll in polls)
+            {
+                await pollHubService.NotifyPollDeleted(poll.Id.ToString());
+            }
         }
     }
-
     public interface IPollService
     {
         Task<PollModel> GetPollAsync(Guid id);

@@ -3,12 +3,13 @@ using enquetix.Modules.Application.EntityFramework;
 using enquetix.Modules.Application.Redis;
 using enquetix.Modules.Auth.Services;
 using enquetix.Modules.Poll.DTOs;
+using enquetix.Modules.Poll.Hubs;
 using enquetix.Modules.Poll.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace enquetix.Modules.Poll.Services
 {
-    public class PollOptionService(Context context, IAuthService authService, ICacheService cacheService) : IPollOptionService
+    public class PollOptionService(Context context, IAuthService authService, ICacheService cacheService, IPollHubService pollHubService) : IPollOptionService
     {
         public async Task<PollOptionModel> GetPollOptionAsync(Guid id)
         {
@@ -55,6 +56,9 @@ namespace enquetix.Modules.Poll.Services
             await context.SaveChangesAsync();
             await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
             await cacheService.RemoveAsync($"poll:{pollId}");
+
+            await pollHubService.NotifyPollOptionCreated(pollId.ToString(), option);
+
             return option;
         }
 
@@ -90,6 +94,13 @@ namespace enquetix.Modules.Poll.Services
             await context.SaveChangesAsync();
             await cacheService.RemoveAsync($"poll:{pollId}");
             await cacheService.RemoveAsync($"pollOptions:poll:{pollId}");
+
+            foreach (var option in options)
+            {
+                await cacheService.RemoveAsync($"pollOption:{option.Id}");
+                await pollHubService.NotifyPollOptionCreated(pollId.ToString(), option);
+            }
+
             return options;
         }
 
@@ -103,6 +114,9 @@ namespace enquetix.Modules.Poll.Services
             await cacheService.RemoveAsync($"poll:{existingOption.PollId}");
             await cacheService.RemoveAsync($"pollOption:{id}");
             await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
+
+            await pollHubService.NotifyPollOptionUpdated(existingOption.PollId.ToString(), existingOption);
+
             return existingOption;
         }
 
@@ -122,6 +136,8 @@ namespace enquetix.Modules.Poll.Services
             await cacheService.RemoveAsync($"poll:{existingOption.PollId}");
             await cacheService.RemoveAsync($"pollOption:{id}");
             await cacheService.RemoveAsync($"pollOptions:poll:{existingOption.PollId}");
+
+            await pollHubService.NotifyPollOptionDeleted(existingOption.PollId.ToString(), existingOption);
         }
 
         public async Task DeletePollOptionsAsync(List<Guid> pollOptionsIds)
@@ -148,6 +164,8 @@ namespace enquetix.Modules.Poll.Services
                 await cacheService.RemoveAsync($"poll:{option.PollId}");
                 await cacheService.RemoveAsync($"pollOption:{option.Id}");
                 await cacheService.RemoveAsync($"pollOptions:poll:{option.PollId}");
+
+                await pollHubService.NotifyPollOptionDeleted(option.PollId.ToString(), option);
             }
         }
 
@@ -174,6 +192,7 @@ namespace enquetix.Modules.Poll.Services
             foreach (var option in options)
             {
                 await cacheService.RemoveAsync($"pollOption:{option.Id}");
+                await pollHubService.NotifyPollOptionDeleted(pollId.ToString(), option);
             }
         }
     }
